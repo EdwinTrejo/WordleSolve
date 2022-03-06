@@ -1,4 +1,6 @@
-﻿//#define DEBUGGING
+﻿#if DEBUG
+#define DEBUGGING
+#endif
 
 using System;
 using System.Collections.Generic;
@@ -13,9 +15,11 @@ namespace WordGuesser
     public class Program
     {
         private const int WORDLE_LENGTH = 5;
-
-        private const string TEMP_WRD = "w___s";
-        private const string TEMP_AS_LE = "or";
+#if DEBUGGING
+        private const string TEMP_WRD = "c____";
+        private const string TEMP_AS_LE = "ot";
+        private const string TEMP_NT_US_LE = "magiur";
+#endif
 
         private static List<string> WORDLE_SIZE_WORDS = new List<string>();
 
@@ -28,6 +32,10 @@ namespace WordGuesser
                     string text = System.IO.File.ReadAllText(@"src\out.txt");
                     WORDLE_SIZE_WORDS = text.Split("\r\n").ToList();
                     WORDLE_SIZE_WORDS = WORDLE_SIZE_WORDS.Select(x => x).Where(c => c.Length == WORDLE_LENGTH).ToList();
+                    for (int i = 0; i < WORDLE_SIZE_WORDS.Count(); i++)
+                    {
+                        WORDLE_SIZE_WORDS[i] = WORDLE_SIZE_WORDS[i].ToUpper();
+                    }
                 }
                 return WORDLE_SIZE_WORDS;
             }
@@ -63,6 +71,7 @@ namespace WordGuesser
             bool can_use = false;
             string curr_word = string.Empty;
             HashSet<char> associated_letters = new HashSet<char>();
+            HashSet<char> not_used_letters = new HashSet<char>();
 
             Console.WriteLine(Instructions);
 
@@ -77,7 +86,7 @@ namespace WordGuesser
                 if (new_guess.Length == WORDLE_LENGTH && containsOnlyLetters(new_guess, new List<char>() { '_' }))
                 {
                     can_use = true;
-                    curr_word = new_guess;
+                    curr_word = new_guess.ToUpper();
                 }
             }
             Console.Write("\nEnter Associated Letters: ");
@@ -89,11 +98,26 @@ namespace WordGuesser
             foreach (var let in as_le)
             {
                 if (containsOnlyLetters(let.ToString(), null))
-                    associated_letters.Add(let);
+                    associated_letters.Add(char.ToUpper(let));
             }
 
+            Console.Write("\nEnter Not Used Letters: ");
+#if DEBUGGING
+            string nt_us_le = TEMP_NT_US_LE;
+#else
+            string nt_us_le = Console.ReadLine();
+#endif
+            foreach (var let in nt_us_le)
+            {
+                if (containsOnlyLetters(let.ToString(), null))
+                    not_used_letters.Add(char.ToUpper(let));
+            }
+
+            Console.WriteLine();
             Console.WriteLine($"\nUsing word\t\t: {curr_word}");
             Console.WriteLine($"With associated letters\t: {listToString(associated_letters)}");
+            Console.WriteLine($"Not using letters\t: {listToString(not_used_letters)}");
+            Console.WriteLine();
 
             List<string> copy_list = word_list.ToList();
 
@@ -119,8 +143,10 @@ namespace WordGuesser
                          ).ToList();
                     copy_list = mod_copy_list;
                 }
-                Console.WriteLine($"\nKnow letter round[{i + 1}]: Possible Guesses: {copy_list.Count()}");
+                Console.Write($"\nKnow letter round [{i+1}[{_char}]]: Possible Guesses: {copy_list.Count()}");
             }
+
+            Console.WriteLine();
 
             if (copy_list.Count() > 0)
             {
@@ -137,7 +163,7 @@ namespace WordGuesser
                              ).ToList();
                         copy_list = mod_copy_list;
                     }
-                    Console.WriteLine($"\nAssociated letter[{++round}]: Possible Guesses: {copy_list.Count()}");
+                    Console.Write($"\nAssociated letter [{++round}[{_char}]]: Possible Guesses: {copy_list.Count()}");
                 }
             }
 
@@ -145,9 +171,30 @@ namespace WordGuesser
 
             if (copy_list.Count() > 0)
             {
+                int round = 0;
+                foreach (char _char in not_used_letters)
+                {
+                    if (copy_list.Count() > 0)
+                    {
+                        List<string> mod_copy_list =
+                            (
+                            from this_word in copy_list
+                            where !(this_word.Contains(_char))
+                            select this_word
+                             ).ToList();
+                        copy_list = mod_copy_list;
+                    }
+                    Console.Write($"\nNot Used letter   [{++round}[{_char}]]: Possible Guesses: {copy_list.Count()}");
+                }
+            }
+
+            Console.WriteLine("\n");
+
+            if (copy_list.Count() > 0)
+            {
                 foreach (var candidate in copy_list)
                 {
-                    Console.WriteLine($"Candidate: {candidate}");
+                    Console.WriteLine($"Candidate: {candidate.ToLower()}");
                 }
             }
             else
