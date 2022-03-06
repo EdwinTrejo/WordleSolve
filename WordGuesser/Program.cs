@@ -1,4 +1,4 @@
-﻿#define DEBUGGING
+﻿//#define DEBUGGING
 
 using System;
 using System.Collections.Generic;
@@ -80,12 +80,12 @@ namespace WordGuesser
                     curr_word = new_guess;
                 }
             }
-#if DEBUGGING
             Console.Write("\nEnter Associated Letters: ");
+#if DEBUGGING
+            string as_le = TEMP_AS_LE;
 #else
             string as_le = Console.ReadLine();
 #endif
-            string as_le = TEMP_AS_LE;
             foreach (var let in as_le)
             {
                 if (containsOnlyLetters(let.ToString(), null))
